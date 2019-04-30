@@ -205,7 +205,7 @@ export default class App extends Component {
                 this.state.recognitions.map((res, id) => {
                 return (
                   <Text key={id} style={{ color: 'red', fontSize: 20, position: "absolute", bottom: - 25 * (1+id) }}>
-                    {res["label"] + " : " + (res["confidence"]).toFixed(0) + "%"}
+                    {res["label"] + " : " + (res["confidence"]).toFixed(0)  + "%"}
                   </Text>
                 )
               })}
