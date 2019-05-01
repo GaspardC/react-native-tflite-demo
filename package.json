@@ -1,5 +1,5 @@
 {
-  "name": "example",
+  "name": "hmp_run",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -10,7 +10,7 @@
     "@babel/runtime": "^7.4.3",
     "react": "16.6.3",
     "react-native": "0.58.4",
-    "react-native-image-picker": "0.28.0",
+    "react-native-image-picker": "^0.28.0",
     "tflite-react-native": "0.0.4"
   },
   "devDependencies": {
