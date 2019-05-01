@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Platform, StyleSheet, ScrollView, Image, Text, View, TouchableOpacity } from 'react-native';
 import Tflite from 'tflite-react-native';
 import ImagePicker from 'react-native-image-picker';
+import { RNCamera } from 'react-native-camera';
 
 let tflite = new Tflite();
 
@@ -23,6 +24,10 @@ export default class App extends Component {
   constructor(props) {
     super(props);
     this.state = INIT_STATE;
+  }
+
+  componentDidMount(){
+    this.onSelectModel(ssd)
   }
 
   onSelectModel(model) {
@@ -52,6 +57,68 @@ export default class App extends Component {
       });
   }
 
+  launchDetection(imgPath, imgWidth, imgHeight ) {
+    this.setState({
+      source: { uri: imgPath },
+      imageHeight: imgHeight * width / imgWidth,
+      imageWidth: width
+    });
+
+    switch (this.state.model) {
+      case ssd:
+        tflite.detectObjectOnImage({
+          path: imgPath,
+          threshold: 0.2,
+          numResultsPerClass: 1,
+        },
+          (err, res) => {
+            if (err)
+              console.log(err);
+            else
+              this.setState({ recognitions: res });
+          });
+        break;
+      case yolo:
+        tflite.detectObjectOnImage({
+          path,
+          model: 'YOLO',
+          imageMean: 0.0,
+          imageStd: 255.0,
+          threshold: 0.4,
+          numResultsPerClass: 1,
+        },
+          (err, res) => {
+            if (err)
+              console.log(err);
+            else
+              this.setState({ recognitions: res });
+          });
+        break;
+      default:
+      try{
+        tflite.runModelOnImage({
+          path,
+          imageMean: 128.0,
+          imageStd: 128.0,
+          numResults: 3,
+          threshold: 0.05
+        },
+          (err, res) => {
+            if (err){
+              console.log(err);
+              if(err = 'err'){alert('open pose sucess!')}
+            }
+            else
+              this.setState({ recognitions: res });
+          });
+
+      }catch(e){
+        console.log(e)
+      }
+      
+    }
+  }
+
   onSelectImage() {
     const options = {
       title: 'Select Avatar',
@@ -72,65 +139,7 @@ export default class App extends Component {
         var path = Platform.OS === 'ios' ? response.uri : 'file://' + response.path;
         var w = response.width;
         var h = response.height;
-        this.setState({
-          source: { uri: path },
-          imageHeight: h * width / w,
-          imageWidth: width
-        });
-
-        switch (this.state.model) {
-          case ssd:
-            tflite.detectObjectOnImage({
-              path,
-              threshold: 0.2,
-              numResultsPerClass: 1,
-            },
-              (err, res) => {
-                if (err)
-                  console.log(err);
-                else
-                  this.setState({ recognitions: res });
-              });
-            break;
-          case yolo:
-            tflite.detectObjectOnImage({
-              path,
-              model: 'YOLO',
-              imageMean: 0.0,
-              imageStd: 255.0,
-              threshold: 0.4,
-              numResultsPerClass: 1,
-            },
-              (err, res) => {
-                if (err)
-                  console.log(err);
-                else
-                  this.setState({ recognitions: res });
-              });
-            break;
-          default:
-          try{
-            tflite.runModelOnImage({
-              path,
-              imageMean: 128.0,
-              imageStd: 128.0,
-              numResults: 3,
-              threshold: 0.05
-            },
-              (err, res) => {
-                if (err){
-                  console.log(err);
-                  if(err = 'err'){alert('open pose sucess!')}
-                }
-                else
-                  this.setState({ recognitions: res });
-              });
-
-          }catch(e){
-            console.log(e)
-          }
-          
-        }
+        this.launchDetection(path, w, h)
       }
     });
   }
@@ -164,9 +173,29 @@ export default class App extends Component {
     }
     return (
       <View style={[styles.container]}>
-       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-       <View style={{alignItems: 'center', justifyContent: 'center', paddingTop: 50}}>
-        {model ?
+       {/* <ScrollView contentContainerStyle={{ flexGrow: 1 }}> */}
+       {/* <View style={{alignItems: 'center', justifyContent: 'center', paddingTop: 50}}> */}
+       <RNCamera
+          ref={ref => {
+            this.camera = ref;
+          }}
+          captureAudio={false}
+          style={styles.preview}
+          type={RNCamera.Constants.Type.back}
+          flashMode={RNCamera.Constants.FlashMode.on}
+          androidCameraPermissionOptions={{
+            title: 'Permission to use camera',
+            message: 'We need your permission to use your camera',
+            buttonPositive: 'Ok',
+            buttonNegative: 'Cancel',
+          }}
+        />
+        <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'center' }}>
+          <TouchableOpacity onPress={this.takePicture.bind(this)} style={styles.capture}>
+            <Text style={{ fontSize: 14 }}> SNAP </Text>
+          </TouchableOpacity>
+        </View>
+        {/* {model ?
           <View>
             <View style={{alignItems: 'center'}}>
             {renderButton(mobile)}
@@ -208,19 +237,29 @@ export default class App extends Component {
             {renderButton(ssd)}
             {renderButton(yolo)}
           </View>
-        }
-        </View>
-      </ScrollView>
+        } */}
+        {/* </View> */}
+      {/* </ScrollView> */}
       </View>
 
     );
   }
+
+  takePicture = async function() {
+    if (this.camera) {
+      const options = { quality: 0.8, base64: false };
+      const data = await this.camera.takePictureAsync(options);
+      console.log(data.uri);
+      this.launchDetection(data.uri, data.width, data.height)
+    }
+  };
 }
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: 'column',
     flex: 1,
-    backgroundColor: 'white'
+    backgroundColor: 'black'
   },
   imageContainer: {
     borderColor: blue,
@@ -255,5 +294,22 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     top: 0,
-  }
+  },
+  preview: {
+    borderWidth: 5,
+    borderColor: 'red',
+    backgroundColor: 'red',
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  capture: {
+    flex: 0,
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    padding: 15,
+    paddingHorizontal: 20,
+    alignSelf: 'center',
+    margin: 20,
+  },
 });

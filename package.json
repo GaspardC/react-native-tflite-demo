@@ -10,6 +10,7 @@
     "@babel/runtime": "^7.4.3",
     "react": "16.6.3",
     "react-native": "0.58.4",
+    "react-native-camera": "^2.6.0",
     "react-native-image-picker": "^0.28.0",
     "tflite-react-native": "0.0.4"
   },
