@@ -137,25 +137,15 @@ export default class App extends Component {
 
   renderBoxes() {
     const { model, recognitions, imageHeight, imageWidth } = this.state;
-    if (model == mobile)
-    //   if(!displayMobile) return;
-    //   return recognitions.map((res, id) => {
-    //     return (
-    //       <Text key={id} style={{ color: displayMobile?'blue':'green', fontSize: 20, position: "absolute", bottom: - 25 * (1+id) }}>
-    //         {res["label"] + " : " + (res["confidence"] * 100).toFixed(0) + "%"}
-    //       </Text>
-    //     )
-    //   });
-      return;
-    else
-      return recognitions.map((res, id) => {
+    if (model != mobile)
+      return recognitions.sort((valA,valB) =>  - valA["confidenceInClass"] + valB["confidenceInClass"]).filter((_,i) => i < 3).map((res, id) => {
         var left = res["rect"]["x"] * imageWidth;
         var top = res["rect"]["y"] * imageHeight;
         var width = res["rect"]["w"] * imageWidth;
         var height = res["rect"]["h"] * imageHeight;
         return (
           <View key={id} style={[styles.box, { top, left, width, height }]}>
-            <Text style={{ color: 'white', backgroundColor: blue }}>
+            <Text style={{ color: 'white', backgroundColor: '#'+Math.floor(Math.random()*16777215).toString(16) }}>
               {res["detectedClass"] + " " + (res["confidenceInClass"] * 100).toFixed(0) + "%"}
             </Text>
           </View>
