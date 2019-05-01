@@ -1,1 +1,0 @@
-../../../../../../../../TensorFlowLite/Frameworks/tensorflow_lite.framework/Headers/tensorflow/contrib/lite/c/c_api_internal.h
