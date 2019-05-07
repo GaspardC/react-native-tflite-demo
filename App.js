@@ -11,6 +11,7 @@ const width = 350;
 const blue = "#25d5fd";
 const mobile = "MobileNet";
 const ssd = "SSD MobileNet";
+const open_pose = "Open Pose";
 const yolo = "Tiny YOLOv2";
 const INIT_STATE = {
   model: null,
@@ -27,12 +28,17 @@ export default class App extends Component {
   }
 
   componentDidMount(){
-    this.onSelectModel(ssd)
+    this.onSelectModel(open_pose);
+    // this.onSelectImage()
   }
 
   onSelectModel(model) {
     this.setState({ ...INIT_STATE, model });
     switch (model) {
+      case open_pose:
+        var modelFile = 'models/open_pose.tflite';
+        var labelsFile = 'models/ssd_mobilenet.txt';
+        break;
       case ssd:
         var modelFile = 'models/ssd_mobilenet.tflite';
         var labelsFile = 'models/ssd_mobilenet.txt';
@@ -65,6 +71,28 @@ export default class App extends Component {
     });
 
     switch (this.state.model) {
+      case open_pose:
+        tflite.runModelOnImage({
+          path: imgPath,
+          imageMean: 128.0,
+          imageStd: 128.0,
+          numResults: 3,
+          threshold: 0.05
+        },
+          (err, res) => {
+            if (err)
+              console.log(err);
+            else {
+              let i = res.i;
+              let j = res.j;
+              i = i * 318 / 46  * imgHeight / 318;
+              j = j * imgWidth / 46;
+              res.i = i;
+              res.j = j;
+              this.setState({ recognitions: res });
+            }
+          });
+        break;
       case ssd:
         tflite.detectObjectOnImage({
           path: imgPath,
@@ -80,7 +108,7 @@ export default class App extends Component {
         break;
       case yolo:
         tflite.detectObjectOnImage({
-          path,
+          path: imgPath,
           model: 'YOLO',
           imageMean: 0.0,
           imageStd: 255.0,
@@ -182,7 +210,7 @@ export default class App extends Component {
           captureAudio={false}
           style={styles.preview}
           type={RNCamera.Constants.Type.back}
-          flashMode={RNCamera.Constants.FlashMode.on}
+          flashMode={RNCamera.Constants.FlashMode.off}
           androidCameraPermissionOptions={{
             title: 'Permission to use camera',
             message: 'We need your permission to use your camera',
